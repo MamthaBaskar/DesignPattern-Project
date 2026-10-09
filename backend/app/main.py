@@ -41,12 +41,19 @@ async def validation_exception_handler(request: Request, exc: DocumentValidation
 
 app.include_router(router)
 
+# Mount static built frontend if available (supports single-service unified deployment)
+from pathlib import Path
+from fastapi.staticfiles import StaticFiles
 
-@app.get("/")
-def root():
-    return {
-        "message": "AI Document Comparison System API is active.",
-        "docs": "/docs",
-        "health": "/api/health",
-    }
+frontend_dist = Path(__file__).resolve().parent.parent.parent / "frontend" / "dist"
+if frontend_dist.is_dir() and (frontend_dist / "index.html").is_file():
+    app.mount("/", StaticFiles(directory=str(frontend_dist), html=True), name="frontend")
+else:
+    @app.get("/")
+    def root():
+        return {
+            "message": "AI Document Comparison System API is active.",
+            "docs": "/docs",
+            "health": "/api/health",
+        }
 
